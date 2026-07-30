@@ -28,3 +28,6 @@ EPOCHS = 20
 
 # Random Seed
 RANDOM_SEED = 42
+
+# Feature Parameters
+MAX_FRAMES = 400
