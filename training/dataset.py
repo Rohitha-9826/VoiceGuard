@@ -10,6 +10,9 @@ from preprocessing.feature_extractor import FeatureExtractor
 
 
 class ASVspoofDataset(Dataset):
+    """
+    PyTorch Dataset for the ASVspoof2019 LA dataset.
+    """
 
     def __init__(self, protocol_path, audio_dir):
 
@@ -50,9 +53,10 @@ class ASVspoofDataset(Dataset):
 
         audio_path = self.audio_dir / f"{row.file_name}.flac"
 
-        # Your AudioLoader returns two values
+        # AudioLoader returns (audio, sample_rate)
         audio, _ = self.audio_loader.load_audio(audio_path)
 
+        # Extract MFCC features
         mfcc = self.feature_extractor.extract_mfcc(audio)
 
         feature = torch.tensor(mfcc, dtype=torch.float32)
