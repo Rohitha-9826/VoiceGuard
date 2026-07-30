@@ -1,10 +1,19 @@
 from pathlib import Path
 
+import torch
+import torch.nn as nn
+import torch.optim as optim
 from torch.utils.data import DataLoader
 
+from models.cnn_bilstm import CNNBiLSTM
 from training.dataset import ASVspoofDataset
+from training.trainer import Trainer
 
-# Detect environment (Colab or Local)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+print("Device:", device)
+
+# Dataset path
 if Path("/content/dataset").exists():
     DATASET_ROOT = Path("/content/dataset/LA")
 else:
@@ -14,13 +23,8 @@ protocol_path = DATASET_ROOT / "ASVspoof2019_LA_cm_protocols" / "ASVspoof2019.LA
 
 audio_dir = DATASET_ROOT / "ASVspoof2019_LA_train" / "flac"
 
-# Create Dataset
-dataset = ASVspoofDataset(
-    protocol_path=protocol_path,
-    audio_dir=audio_dir
-)
+dataset = ASVspoofDataset(protocol_path, audio_dir)
 
-# Create DataLoader
 train_loader = DataLoader(
     dataset,
     batch_size=32,
@@ -28,17 +32,23 @@ train_loader = DataLoader(
     num_workers=2
 )
 
-print("=" * 50)
-print("DataLoader Created Successfully")
-print("=" * 50)
+model = CNNBiLSTM().to(device)
 
-print(f"Dataset Size : {len(dataset)}")
-print(f"Number of Batches : {len(train_loader)}")
+criterion = nn.CrossEntropyLoss()
 
-# Get one batch
-features, labels = next(iter(train_loader))
+optimizer = optim.Adam(
+    model.parameters(),
+    lr=0.001
+)
 
-print("Feature Batch Shape :", features.shape)
-print("Label Batch Shape :", labels.shape)
+trainer = Trainer(
+    model,
+    optimizer,
+    criterion,
+    device
+)
 
-print("First 10 Labels :", labels[:10])
+loss, accuracy = trainer.train_one_epoch(train_loader)
+
+print(f"Training Loss : {loss:.4f}")
+print(f"Training Accuracy : {accuracy:.2f}%")
